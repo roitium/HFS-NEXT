@@ -4,6 +4,7 @@ import { HFS_APIs } from '@/app/constants'
 import type {
   ExamDetail,
   ExamListResponse,
+  ExamOverviewV4,
   LastExamOverview,
   UserSnapshot,
 } from '@/types/exam'
@@ -16,6 +17,11 @@ export const queryKeys = {
   examOverview: (examId: number) => [
     ...queryKeys.all(),
     'examOverview',
+    examId,
+  ],
+  examOverviewV4: (examId: number) => [
+    ...queryKeys.all(),
+    'examOverviewV4',
     examId,
   ],
   examRankInfo: (examId: number) => [
@@ -172,5 +178,33 @@ export const useLastExamOverviewQuery = (token: string | undefined) => {
           return response.payload
         }
       : skipToken,
+  })
+}
+
+export const useExamOverviewV4Query = (
+  token: string | undefined,
+  examId?: number,
+) => {
+  return useQuery({
+    queryKey: examId !== undefined ? queryKeys.examOverviewV4(examId) : ['examOverviewV4', 'undefined'],
+    queryFn:
+      token && examId !== undefined
+        ? async () => {
+            const response = await fetchHFSApiFromServer<ExamOverviewV4>(
+              HFS_APIs.examOverviewV4,
+              {
+                method: 'GET',
+                token: token,
+                getParams: {
+                  examId: String(examId),
+                },
+              },
+            )
+            if (!response.ok) {
+              throw new Error(response.errMsg || '获取年级排名失败')
+            }
+            return response.payload
+          }
+        : skipToken,
   })
 }

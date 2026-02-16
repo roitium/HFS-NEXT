@@ -18,7 +18,7 @@ import Navbar from '@/components/navBar'
 import { GithubSVGIcon } from '@/components/svg'
 import type { ExamObject, ExamRankInfo } from '@/types/exam'
 import { formatTimestamp } from '@/utils/time'
-import { useExamOverviewQuery, useUserSnapshotQuery } from '@/hooks/queries'
+import { useExamOverviewQuery, useExamOverviewV4Query, useUserSnapshotQuery } from '@/hooks/queries'
 import { useStorage } from '@/hooks/useStorage'
 
 function RankInfoComponent({
@@ -83,6 +83,10 @@ export default function ExamPage(props: { params: Promise<{ id: string }> }) {
     isError: isExamOverviewError,
     isPending: isExamOverviewPending,
   } = useExamOverviewQuery(token, params.id)
+  const { data: examOverviewV4 } = useExamOverviewV4Query(
+    token,
+    examOverview?.examId,
+  )
 
   const changeDisplayedMode = useCallback((paperId: string) => {
     setDisplayedPapersMode((prevState) => {
@@ -265,6 +269,18 @@ export default function ExamPage(props: { params: Promise<{ id: string }> }) {
                       ? `${examObject.detail.classRank} (打败了全班${examObject.detail.classDefeatRatio}%的人)`
                       : examObject.detail.classRankS
                     : '...'}
+                </div>
+              </div>
+              <div>
+                <div className='text-gray-500 text-sm dark:text-gray-400'>
+                  年级排名
+                </div>
+                <div className='font-medium'>
+                  {examOverviewV4?.compare?.curGradeRank
+                    ? examOverviewV4.compare.curGradeRank
+                    : examObject?.detail?.gradeRank
+                      ? examObject.detail.gradeRank
+                      : '获取失败 无此数据'}
                 </div>
               </div>
             </div>

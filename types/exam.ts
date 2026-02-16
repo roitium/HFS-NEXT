@@ -136,3 +136,10 @@ export type LastExamOverview =
       rankRaise: number
     }
   | Record<string, never>
+
+// v4 接口返回的考试概览数据
+export interface ExamOverviewV4 {
+  compare: {
+    curGradeRank: number
+  }
+}

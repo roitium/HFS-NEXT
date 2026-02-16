@@ -9,4 +9,5 @@ export const HFS_APIs = {
   paperRankInfo:
     'https://hfs-be.yunxiao.com/v3/exam/${examId}/papers/${paperId}/rank-info',
   lastExamOverview: 'https://hfs-be.yunxiao.com/v2/students/last-exam-overview',
+  examOverviewV4: 'https://hfs-be.yunxiao.com/v4/exam/overview',
 }

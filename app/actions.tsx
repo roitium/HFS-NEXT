@@ -25,7 +25,19 @@ export async function fetchHFSApiFromServer<T>(
   },
 ): Promise<FetchHFSApiResponse<T>> {
   try {
-    const parsedUrl = fillTemplate(url, init.getParams)
+    let parsedUrl = fillTemplate(url, init.getParams)
+    // 处理查询参数
+    if (init.getParams && !url.includes('${')) {
+      // 如果 URL 中没有模板占位符，则将 getParams 作为查询参数
+      const searchParams = new URLSearchParams()
+      for (const [key, value] of Object.entries(init.getParams)) {
+        searchParams.append(key, String(value))
+      }
+      const queryString = searchParams.toString()
+      if (queryString) {
+        parsedUrl += (parsedUrl.includes('?') ? '&' : '?') + queryString
+      }
+    }
     const headers = {
       'Content-Type': 'application/json',
       'Hfs-token': init.token,
