@@ -3,10 +3,10 @@ import { fetchHFSApiFromServer } from '@/app/actions'
 import { HFS_APIs } from '@/app/constants'
 import type {
   ExamDetail,
-  ExamListResponse,
   ExamOverviewV4,
   LastExamOverview,
   UserSnapshot,
+  WrongItemsOverviewResponse,
 } from '@/types/exam'
 import { formatTimestamp } from '@/utils/time'
 
@@ -49,7 +49,7 @@ export const useExamListQuery = (token: string | undefined) => {
     queryKey: queryKeys.examList(),
     queryFn: token
       ? async () => {
-          const response = await fetchHFSApiFromServer<ExamListResponse>(
+          const response = await fetchHFSApiFromServer<WrongItemsOverviewResponse[]>(
             HFS_APIs.examList,
             {
               method: 'GET',
@@ -59,23 +59,66 @@ export const useExamListQuery = (token: string | undefined) => {
           if (!response.ok) {
             throw new Error(response.errMsg || '获取考试列表失败')
           }
-          const newExams: {
+          // 从各学科的 examList 中提取考试，按 examId 去重
+          const examMap = new Map<string, {
             name: string
-            score: string
             released: string
             examId: string
-          }[] = []
-          for (const exam of response.payload.list) {
-            newExams.push({
-              name: exam.name,
-              score: `${exam.score}/${exam.manfen}`,
-              released: formatTimestamp(exam.time),
-              examId: exam.examId,
-            })
+            examTime: number
+          }>()
+          for (const subject of response.payload) {
+            for (const exam of subject.examList) {
+              if (!examMap.has(exam.examId)) {
+                examMap.set(exam.examId, {
+                  name: exam.examName,
+                  released: formatTimestamp(exam.examTime),
+                  examId: exam.examId,
+                  examTime: exam.examTime,
+                })
+              }
+            }
           }
-          return newExams
+          // 按 examTime 降序排序（最新的在前）
+          const sortedExams = Array.from(examMap.values())
+            .sort((a, b) => b.examTime - a.examTime)
+
+          // 批量获取每个考试的详情（包括分数）
+          const examDetails = await Promise.all(
+            sortedExams.map(async (exam) => {
+              try {
+                const detailResponse = await fetchHFSApiFromServer<ExamDetail>(
+                  HFS_APIs.examOverview,
+                  {
+                    method: 'GET',
+                    token: token,
+                    getParams: {
+                      examId: exam.examId,
+                    },
+                  },
+                )
+                if (detailResponse.ok) {
+                  return {
+                    name: exam.name,
+                    score: `${detailResponse.payload.score}/${detailResponse.payload.manfen}`,
+                    released: exam.released,
+                    examId: exam.examId,
+                  }
+                }
+              } catch {
+                // 获取详情失败，返回无分数版本
+              }
+              return {
+                name: exam.name,
+                score: '-',
+                released: exam.released,
+                examId: exam.examId,
+              }
+            })
+          )
+          return examDetails
         }
       : skipToken,
+    staleTime: 1000 * 60 * 60, // 缓存 1 小时
   })
 }
 

@@ -113,6 +113,25 @@ export type ExamListResponse = {
   }[]
 }
 
+// v2/wrong-items/overview 接口返回的数据结构
+export interface WrongItemsOverviewResponse {
+  subject: string
+  noReview: number
+  semesterList: {
+    name: string
+    wrongNum: number
+    reviewNum: number
+  }[]
+  examList: {
+    examName: string
+    examType: number
+    examTime: number
+    examId: string
+    wrongNum: number
+    reviewNum: number
+  }[]
+}
+
 export type LastExamOverview =
   | {
       examId: number

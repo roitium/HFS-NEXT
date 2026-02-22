@@ -46,7 +46,7 @@ function ExamCard({
 export default function ExamSelector() {
   const router = useRouter()
   const [token, setToken] = useStorage('hfs_token')
-  const { data: examList, isError } = useExamListQuery(token)
+  const { data: examList, isError, isLoading } = useExamListQuery(token)
 
   if (!token) {
     toast.error('你还没登录，返回登录页')
@@ -77,20 +77,27 @@ export default function ExamSelector() {
           </div>
         </div>
       </div>
-      <div className=' grid gap-6 pt-6 md:grid-cols-2 md:pt-6 lg:grid-cols-3 xl:grid-cols-4'>
-        {examList?.map((exam) => {
-          return (
-            <ExamCard
-              key={exam.examId}
-              name={exam.name}
-              score={exam.score}
-              released={exam.released}
-              examId={exam.examId}
-              router={router}
-            />
-          )
-        })}
-      </div>
+      {isLoading ? (
+        <div className='flex flex-col items-center justify-center py-20'>
+          <div className='h-10 w-10 animate-spin rounded-full border-4 border-gray-300 border-t-sky-500' />
+          <p className='mt-4 text-gray-500'>正在加载考试列表...</p>
+        </div>
+      ) : (
+        <div className='grid gap-6 pt-6 md:grid-cols-2 md:pt-6 lg:grid-cols-3 xl:grid-cols-4'>
+          {examList?.map((exam) => {
+            return (
+              <ExamCard
+                key={exam.examId}
+                name={exam.name}
+                score={exam.score}
+                released={exam.released}
+                examId={exam.examId}
+                router={router}
+              />
+            )
+          })}
+        </div>
+      )}
       <div className='grow' />
       <div className='divide-y pt-10'>
         <div />
